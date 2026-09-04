@@ -29,7 +29,7 @@ const customMarkerIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = "";
 
 // ---------------------------------------------------------------------------
 // Design tokens
