@@ -1,0 +1,36 @@
+{
+    "model_name": "AEGIS Landslide Risk Assessment Model",
+    "disaster_type": "landslide",
+    "version": "2.0.0",
+    "trained_at": "2026-09-04 11:57:54",
+    "algorithm": "Ensemble (XGBoost + LightGBM + Random Forest)",
+    "accuracy": 0.89,
+    "f1_score": 0.8861,
+    "features": [
+        "rainfall",
+        "soil_moisture",
+        "slope",
+        "elevation",
+        "soil_type",
+        "land_cover",
+        "distance_to_river",
+        "distance_to_road",
+        "geology",
+        "ndvi",
+        "historical_landslide",
+        "slope_risk_index",
+        "rainfall_saturation_index",
+        "elevation_slope_interaction",
+        "soil_instability_index",
+        "river_proximity_risk",
+        "terrain_risk_index",
+        "historical_landslide_factor",
+        "compound_landslide_risk"
+    ],
+    "classes": [
+        "EXTREME",
+        "HIGH",
+        "LOW",
+        "MEDIUM"
+    ]
+}

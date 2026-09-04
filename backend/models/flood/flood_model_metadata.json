@@ -1,0 +1,30 @@
+{
+    "model_name": "AEGIS Flood Risk Assessment Model",
+    "disaster_type": "flood",
+    "version": "2.0.0",
+    "trained_at": "2026-09-04 11:57:52",
+    "algorithm": "Ensemble (XGBoost + LightGBM + Random Forest)",
+    "accuracy": 0.8625,
+    "f1_score": 0.8589,
+    "features": [
+        "rainfall",
+        "river_level",
+        "soil_moisture",
+        "elevation",
+        "slope",
+        "drainage_capacity",
+        "historical_floods",
+        "seismic_activity",
+        "hydro_climatic_index",
+        "river_overflow_ratio",
+        "landslide_susceptibility",
+        "compound_risk_factor"
+    ],
+    "classes": [
+        "EXTREME",
+        "HIGH",
+        "LOW",
+        "MEDIUM"
+    ],
+    "dataset_source": "Synthetic Realistis Fallback"
+}

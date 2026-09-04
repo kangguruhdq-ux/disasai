@@ -1,0 +1,34 @@
+{
+    "model_name": "AEGIS Seismic Hazard Estimation Model",
+    "disaster_type": "earthquake",
+    "version": "2.0.0",
+    "trained_at": "2026-09-04 11:57:57",
+    "algorithm": "Ensemble (XGBoost + LightGBM + Random Forest)",
+    "accuracy": 0.882,
+    "f1_score": 0.8788,
+    "features": [
+        "latitude",
+        "longitude",
+        "depth",
+        "magnitude",
+        "distance_to_fault",
+        "fault_density",
+        "historical_earthquakes",
+        "seismic_activity",
+        "tectonic_region",
+        "seismic_activity_index",
+        "magnitude_risk_index",
+        "depth_risk_index",
+        "fault_proximity_index",
+        "historical_seismic_index",
+        "regional_seismic_index",
+        "compound_seismic_risk"
+    ],
+    "classes": [
+        "EXTREME",
+        "HIGH",
+        "LOW",
+        "MEDIUM"
+    ],
+    "disclaimer": "This model estimates seismic hazard based on spatial and geophysical factors. It DOES NOT predict exact earthquake time or date."
+}

@@ -1,0 +1,17 @@
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*.class
+*.joblib
+*.pkl
+node_modules/
+dist/
+build/
+.vscode/
+.env
+*.zip
+data/
+data_landslide/
+data_seismic/
