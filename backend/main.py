@@ -37,11 +37,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 DISASTER_TYPES = ["flood", "landslide", "earthquake"]
 
-# Comma-separated list, e.g. "https://aegis.example.id,http://localhost:5173"
 ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get("AEGIS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
-    if origin.strip()
+    "https://aisdisaster.netlify.app",
+    "http://localhost:5173",
+    "http://localhost:3000"
 ]
 
 # In-memory registry populated at startup by load_all_models()
