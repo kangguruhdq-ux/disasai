@@ -119,6 +119,122 @@ function Card({ children, className = '', noPadding = false }) {
 }
 
 // ---------------------------------------------------------------------------
+// Spatial Map Component (Dynamic Leaflet Integration)
+// ---------------------------------------------------------------------------
+function SpatialMap({ stations }) {
+  const mapContainer = React.useRef(null);
+  const [leafletLoaded, setLeafletLoaded] = React.useState(!!window.L);
+
+  React.useEffect(() => {
+    if (window.L) {
+      setLeafletLoaded(true);
+      return;
+    }
+    
+    // Load Leaflet CSS secara dinamis
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    // Load Leaflet JS secara dinamis
+    if (!document.getElementById('leaflet-js')) {
+      const script = document.createElement('script');
+      script.id = 'leaflet-js';
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.async = true;
+      script.onload = () => setLeafletLoaded(true);
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    // Tunggu hingga library termuat dan container tersedia
+    if (!leafletLoaded || !mapContainer.current || !window.L) return;
+
+    // Inisialisasi Peta
+    const map = window.L.map(mapContainer.current, {
+      zoomControl: false // Kita matikan default zoom agar bisa diatur posisinya
+    }).setView([-2.5, 118.0], 5); // Center kordinat pada wilayah Indonesia
+
+    // Posisi control zoom di kanan bawah agar tidak tertutup header/sidebar
+    window.L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Menggunakan tiles peta Dark Mode dari Esri agar murni gratis tanpa API Key
+    window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      maxZoom: 16
+    }).addTo(map);
+
+    // Render Marker untuk setiap Stasiun
+    stations.forEach(station => {
+      // Menentukan warna marker berdasarkan risiko tertinggi dari 3 model (Banjir, Longsor, Gempa)
+      const risks = [station.flood, station.landslide, station.quake];
+      let color = RISK_COLOR.LOW;
+      if (risks.includes('CRITICAL')) color = RISK_COLOR.CRITICAL;
+      else if (risks.includes('EXTREME')) color = RISK_COLOR.EXTREME;
+      else if (risks.includes('HIGH')) color = RISK_COLOR.HIGH;
+      else if (risks.includes('MEDIUM')) color = RISK_COLOR.MEDIUM;
+
+      const customIcon = window.L.divIcon({
+        html: `
+          <div style="
+            width: 14px; 
+            height: 14px; 
+            background-color: ${color}; 
+            border-radius: 50%; 
+            border: 2px solid #06080A;
+            box-shadow: 0 0 12px ${color};
+          "></div>
+        `,
+        className: 'custom-leaflet-marker',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7] // Center marker
+      });
+
+      // Menambahkan Marker ke Peta dan bind Popup Data
+      window.L.marker([station.lat, station.lng], { icon: customIcon })
+        .bindPopup(`
+          <div style="font-family: 'Space Grotesk', sans-serif; color: #06080A; min-width: 150px;">
+            <strong style="font-size: 14px; display: block; margin-bottom: 6px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;">${station.name}</strong>
+            <div style="font-size: 12px; margin-bottom: 4px;"><b>ID Station:</b> <span style="font-family: monospace;">${station.code}</span></div>
+            <div style="font-size: 12px;"><b>Sensor:</b> ${station.type}</div>
+          </div>
+        `)
+        .addTo(map);
+    });
+
+    return () => map.remove(); // Cleanup instance peta ketika tab berpindah
+  }, [leafletLoaded, stations]);
+
+  return (
+    <div className="w-full h-full relative z-0 rounded-xl overflow-hidden">
+       {!leafletLoaded && (
+         <div className="absolute inset-0 flex items-center justify-center bg-[#0a0d12] z-10">
+           <div className="flex flex-col items-center gap-3">
+             <div className="animate-spin w-8 h-8 border-2 border-[#EAB308] border-t-transparent rounded-full"></div>
+             <p className="text-[#94A3B8] text-[11px] font-mono tracking-widest uppercase">Menginisialisasi Peta Spasial...</p>
+           </div>
+         </div>
+       )}
+       <div ref={mapContainer} className="w-full h-full absolute inset-0" style={{ backgroundColor: '#0a0d12' }}></div>
+       <style>{`
+         /* Override Leaflet UI Styles for seamless integration */
+         .leaflet-popup-content-wrapper { background: #F1F4F9; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+         .leaflet-popup-tip { background: #F1F4F9; }
+         .leaflet-container a.leaflet-popup-close-button { color: #475569; padding: 4px; }
+         .leaflet-control-zoom a { background-color: #151A22 !important; color: #F1F4F9 !important; border-color: #1F2633 !important; }
+         .leaflet-control-zoom a:hover { background-color: #1F2633 !important; }
+         .leaflet-container { font-family: 'IBM Plex Sans', sans-serif; }
+       `}</style>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 export default function App() {
@@ -126,6 +242,8 @@ export default function App() {
   const [selectedDisaster, setSelectedDisaster] = useState('flood');
   const [loading, setLoading] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
+  
+  const [apiKey, setApiKey] = useState('');
 
   // States for forms
   const [floodData, setFloodData] = useState({ rainfall: 220.0, river_level: 4.5, soil_moisture: 78.0, elevation: 25.0, slope: 5.0, drainage_capacity: 45.0, historical_floods: 3, seismic_activity: 0.2 });
@@ -147,9 +265,16 @@ export default function App() {
     if (selectedDisaster === 'earthquake') payload = earthquakeData;
 
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        // Many APIs use either 'x-api-key' or Bearer tokens. We supply both to be safe.
+        headers['x-api-key'] = apiKey;
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+
       const res = await fetch(`${API_BASE_URL}/predict/${selectedDisaster}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
@@ -398,7 +523,7 @@ export default function App() {
         {}
         {/* === TAB: MAP === */}
         {activeTab === 'map' && (
-          <div className="h-full flex flex-col max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-8">
+          <div className="h-full flex flex-col max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-8 min-h-[70vh]">
              <header className="mb-6 shrink-0">
               <div className="flex items-center gap-2 text-[#06B6D4] text-[10px] font-mono tracking-widest uppercase mb-2">
                 <MapPin className="w-3 h-3" /> Pemantauan Spasial
@@ -406,17 +531,8 @@ export default function App() {
               <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">Peta Real-Time</h2>
             </header>
             
-            <Card noPadding className="flex-1 min-h-[400px] border-[#1F2633] relative flex items-center justify-center bg-[#0a0d12]">
-                <div className="text-center p-8">
-                  <div className="w-16 h-16 rounded-full bg-[#1F2633] flex items-center justify-center mx-auto mb-4">
-                     <MapPin className="w-8 h-8 text-[#475569]" />
-                  </div>
-                  <h3 className="text-white font-display text-lg mb-2">Geospatial Mapping Disabled</h3>
-                  <p className="text-[#94A3B8] text-sm max-w-md mx-auto">
-                    The external map dependency (leaflet) could not be loaded in this environment. 
-                    In a production deployment, an interactive map showing the active monitoring stations would render here.
-                  </p>
-                </div>
+            <Card noPadding className="flex-1 min-h-[500px] w-full border-[#1F2633] relative flex flex-col bg-[#0a0d12]">
+                <SpatialMap stations={MONITORING_STATIONS} />
             </Card>
           </div>
         )}
@@ -501,6 +617,21 @@ export default function App() {
                 )}
 
                 <div className="pt-4 border-t border-[#1F2633]">
+                  <div className="mb-5">
+                    <label className="block text-[11px] text-[#94A3B8] mb-1.5 font-medium tracking-wide">
+                      API Key (Otorisasi Endpoint)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Masukkan API Key backend Anda..."
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      className="w-full bg-[#06080A] border border-[#1F2633] rounded-md px-3 py-2 text-[#F1F4F9] text-sm focus:outline-none focus:border-[#EAB308] focus:ring-1 focus:ring-[#EAB308]/30 transition-all shadow-inner"
+                      style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                    />
+                    <p className="text-[10px] text-[#475569] mt-1.5">Kosongkan jika API Anda tidak memerlukan autentikasi.</p>
+                  </div>
+
                   <button
                     onClick={handleRunInference}
                     disabled={loading}
