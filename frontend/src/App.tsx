@@ -90,7 +90,7 @@ function TelemetryField({ label, unit, value, onChange, step }) {
           type="number"
           step={step ?? 'any'}
           value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          onChange={(e) => onChange(e.target.value)}
           className="w-full bg-[#06080A] border border-[#1F2633] rounded-md px-3 py-2 text-[#F1F4F9]
                      focus:outline-none focus:border-[#EAB308] focus:ring-1 focus:ring-[#EAB308]/30 transition-all shadow-inner"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}
@@ -259,10 +259,20 @@ export default function App() {
   const handleRunInference = async () => {
     setLoading(true);
     setPredictionResult(null);
+    
+    // Helper untuk mengubah string kosong ('') kembali menjadi angka (0) sebelum dikirim ke API
+    const formatPayload = (data) => {
+      const formatted = {};
+      for (let key in data) {
+        formatted[key] = data[key] === '' ? 0 : Number(data[key]);
+      }
+      return formatted;
+    };
+
     let payload = {};
-    if (selectedDisaster === 'flood') payload = floodData;
-    if (selectedDisaster === 'landslide') payload = landslideData;
-    if (selectedDisaster === 'earthquake') payload = earthquakeData;
+    if (selectedDisaster === 'flood') payload = formatPayload(floodData);
+    if (selectedDisaster === 'landslide') payload = formatPayload(landslideData);
+    if (selectedDisaster === 'earthquake') payload = formatPayload(earthquakeData);
 
     try {
       const headers = { 'Content-Type': 'application/json' };
